@@ -1,7 +1,8 @@
 streamlit
+pandas
+requests
 easyocr
 opencv-python-headless
 torch
 torchvision
 numpy
-matplotlib
