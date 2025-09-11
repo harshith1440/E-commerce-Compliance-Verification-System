@@ -12,20 +12,12 @@ from typing import Dict, List
 from dataclasses import dataclass
 from collections import defaultdict
 
-# ==============================================================================
-# Step 2: All Constants and Setup from your Notebook
-# (NOW INCLUDING ALL CATEGORIES)
-# ==============================================================================
-
-# API URL to fetch product data
 API_URL = "https://flipkart-backend-8z7t.onrender.com/api/v1/product/all-products"
 
-# Initialize the OCR reader once using Streamlit's singleton for efficiency
 @st.cache_resource
 def get_ocr_reader():
     """Initializes and returns the EasyOCR reader, cached for performance."""
     try:
-        # Using gpu=False for broader compatibility (e.g., Raspberry Pi)
         return easyocr.Reader(["en"], gpu=False)
     except Exception as e:
         st.error(f"Fatal Error: Failed to initialize EasyOCR. The app cannot continue. Error: {e}")
@@ -53,11 +45,6 @@ layer2 = {
     "Home": {"Material Type": False, "Dimensions": False, "Load Capacity": False, "Warranty/Guarantee": False}
 }
 
-
-# ==============================================================================
-# Step 3: All Classes and Functions from your Notebook (Updated)
-# ==============================================================================
-
 @dataclass
 class ComplianceRule:
     flag_name: str
@@ -70,7 +57,6 @@ class ThreatLevelAnalyzer:
         self.threat_levels = self._setup_threat_levels()
 
     def _setup_threat_levels(self):
-        # This now includes threat levels for ALL your categories
         layer1_threats = {"Manufacturer/Importer Name & Address": "CRITICAL", "MRP": "HIGH", "Net Quantity": "HIGH", "Date of Manufacture/Expiry": "CRITICAL", "Country of Origin": "MEDIUM", "Consumer Care Details": "MEDIUM"}
         layer2_threats = {
             "Mobiles": {"SAR Value": "CRITICAL", "BIS Certification": "CRITICAL", "Battery Capacity": "HIGH", "Importer/Distributor Details": "HIGH", "Charger/Adapter Info": "MEDIUM", "Warranty Period": "MEDIUM", "Customer Care Helpline": "MEDIUM"},
@@ -84,7 +70,7 @@ class ThreatLevelAnalyzer:
     def get_threat_level(self, flag_name: str, category: str) -> str:
         if flag_name in self.threat_levels["layer1"]: return self.threat_levels["layer1"][flag_name]
         if category in self.threat_levels["layer2"] and flag_name in self.threat_levels["layer2"][category]: return self.threat_levels["layer2"][category][flag_name]
-        return "MEDIUM" # Default for unspecified rules
+        return "MEDIUM" 
 
     def calculate_threat_score(self, missing_flags: Dict[str, str]) -> Dict:
         threat_counts = defaultdict(int)
@@ -124,7 +110,6 @@ class LocalComplianceModel:
     def _check_text_against_rule(self, text: str, rule: ComplianceRule) -> bool:
         if not text: return False
         text_lower = text.lower()
-        # A rule is met if either an optional keyword or a regex pattern is found.
         keyword_match = any(k.lower() in text_lower for k in rule.optional_keywords) if rule.optional_keywords else False
         regex_match = any(re.search(p, text_lower, re.IGNORECASE) for p in rule.regex_patterns) if rule.regex_patterns else False
         return keyword_match or regex_match
@@ -134,8 +119,6 @@ class LocalComplianceModel:
             rule = self.rules.get(flag) or self.category_rules.get(category, {}).get(flag)
             results[flag] = 1 if rule and self._check_text_against_rule(combined_text, rule) else 0
         return results
-
-# Helper functions from notebook
 def fetch_products():
     try:
         r = requests.get(API_URL)
@@ -203,9 +186,7 @@ def process_data(products_api):
     df_analysis = pd.DataFrame(analysis_results)
     return pd.concat([df.drop(columns=['api_text', 'ocr_text', 'combined_text']), df_analysis], axis=1)
 
-# ==============================================================================
-# Step 4: Streamlit UI Code
-# ==============================================================================
+# Streamlit App Layout
 st.set_page_config(page_title="Compliance Checker Dashboard", layout="wide")
 st.title(" E-Commerce Compliance Dashboard")
 st.markdown("An automated tool to scan and validate e-commerce listings against Legal Metrology requirements.")
